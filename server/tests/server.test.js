@@ -1,13 +1,16 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID}= require('mongodb');
 
 const {app} = require('./../server.js');
 const {Todo} = require('./../models/todo.js');
 const {User} = require('./../models/user.js');
 
 const todos =[{
+	_id: new ObjectID(),
 	text: 'First Test Todo'
 },{
+	_id: new ObjectID(),
 	text: 'Second Test Todo'
 }];
 
@@ -67,6 +70,35 @@ describe('GET Request',()=>{
 			.expect(200)
 			.expect((res)=>{
 				expect(res.body.todos.length).toBe(2);
+			})
+			.end(done);
+	})
+})
+
+describe('GET /todos/:id',()=>{
+	it('should get 404 due to invalid id',(done)=>{
+		request(app)
+			.get('/todos/123')
+			.expect(404)
+			.end(done);
+	})
+
+	it('should return todo doc',(done)=>{
+		request(app)
+			.get(`/todos/${todos[0]._id.toHexString()}`)
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.text).toBe(todos[0].text);
+			})
+			.end(done);
+	})
+
+	it('should return empty todo doc',(done)=>{
+		request(app)
+			.get('/todos/685a950ecd170a031b05672a')
+			.expect(404)
+			.expect((res)=>{
+				expect(res.body.todo).toBe(undefined);
 			})
 			.end(done);
 	})
