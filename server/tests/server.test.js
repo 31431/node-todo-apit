@@ -14,6 +14,7 @@ const todos =[{
 	text: 'Second Test Todo'
 }];
 
+
 beforeEach((done)=>{
 	Todo.remove({}).then(()=>{
 		return Todo.insertMany(todos);
@@ -101,5 +102,46 @@ describe('GET /todos/:id',()=>{
 				expect(res.body.todo).toBe(undefined);
 			})
 			.end(done);
+	})
+})
+
+describe('DELETE /todos/:id',()=>{
+	it('should delete the record',(done)=>{
+
+		var hexId = todos[1]._id.toHexString();
+
+		request(app)
+			.delete(`/todos/${hexId}`)
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo._id).toBe(hexId);
+			})
+			.end((err,res)=>{
+				if(err){
+					return done(err);
+				}
+				
+				Todo.findById(hexId).then((doc)=>{
+					expect(doc).toNotExist();
+					done();
+				}).catch((e)=>done(e));
+
+			});
+	})
+
+	it('should return 404 if todos not found',(done)=>{
+		request(app)
+			.delete(`/todos/585e0a4c98851203daa871de`)
+			.expect(404)
+			.end(done);
+
+	})
+
+	it('should return 404 if objectID is invalid',(done)=>{
+		request(app)
+			.delete('/todos/123')
+			.expect(404)
+			.end(done);
+			
 	})
 })
